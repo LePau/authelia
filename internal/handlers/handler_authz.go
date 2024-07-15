@@ -91,6 +91,7 @@ func (authz *Authz) Handler(ctx *middlewares.AutheliaCtx) {
 		ctx.Logger.WithError(err).Debug("Error occurred while attempting to authenticate a request but the matched rule was a bypass rule")
 	}
 
+	ctx.Logger.Infof("isAuthzResult actual level '%d' and required level '%d', hasSubject: '%t'", authn.Level, required, ruleHasSubject)
 	switch isAuthzResult(authn.Level, required, ruleHasSubject) {
 	case AuthzResultForbidden:
 		ctx.Logger.Infof("Access to '%s' is forbidden to user '%s'", object.URL.String(), authn.Username)

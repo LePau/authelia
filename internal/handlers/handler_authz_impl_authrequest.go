@@ -37,7 +37,7 @@ func handleAuthzGetObjectAuthRequest(ctx *middlewares.AutheliaCtx) (object autho
 }
 
 func handleAuthzUnauthorizedAuthRequest(ctx *middlewares.AutheliaCtx, authn *Authn, redirectionURL *url.URL) {
-	ctx.Logger.Infof(logFmtAuthzRedirect, authn.Object.URL.String(), authn.Method, authn.Username, fasthttp.StatusUnauthorized, redirectionURL)
+	ctx.Logger.Infof(logFmtAuthzRedirect, authn.Object.URL.String(), authn.Method, authn.Username+authn.ClientID, fasthttp.StatusUnauthorized, redirectionURL)
 
 	switch authn.Object.Method {
 	case fasthttp.MethodHead:

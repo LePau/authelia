@@ -39,7 +39,7 @@ type Subject struct {
 
 // String returns a string representation of the Subject.
 func (s Subject) String() string {
-	return fmt.Sprintf("username=%s groups=%s ip=%s", s.Username, strings.Join(s.Groups, ","), s.IP.String())
+	return fmt.Sprintf("username=%s groups=%s ip=%s, clientId=%s", s.Username, strings.Join(s.Groups, ","), s.IP.String(), s.ClientID)
 }
 
 // IsAnonymous returns true if the Subject username and groups are empty.
