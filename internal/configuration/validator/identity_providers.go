@@ -713,9 +713,10 @@ func validateOIDCClientScopesSpecialBearerAuthz(c int, config *schema.IdentityPr
 	}
 
 	if !ccg {
-		if !config.Clients[c].RequirePushedAuthorizationRequests {
-			validator.Push(fmt.Errorf(errFmtOIDCClientOptionMustScope, config.Clients[c].ID, "require_pushed_authorization_requests", "'true'", oidc.ScopeAutheliaBearerAuthz, "false"))
-		}
+		// commenting this out based on this discussion: https://github.com/authelia/authelia/discussions/7536
+		// if !config.Clients[c].RequirePushedAuthorizationRequests {
+		// 	validator.Push(fmt.Errorf(errFmtOIDCClientOptionMustScope, config.Clients[c].ID, "require_pushed_authorization_requests", "'true'", oidc.ScopeAutheliaBearerAuthz, "false"))
+		// }
 
 		if !config.Clients[c].RequirePKCE {
 			validator.Push(fmt.Errorf(errFmtOIDCClientOptionMustScope, config.Clients[c].ID, "require_pkce", "'true'", oidc.ScopeAutheliaBearerAuthz, "false"))
