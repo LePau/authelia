@@ -91,6 +91,8 @@ func (s *CookieSessionAuthnStrategy) Get(ctx *middlewares.AutheliaCtx, provider 
 		Username: anonymous,
 	}
 
+	ctx.Logger.Infof("authz.get.CookieSessionAuthnStrategy step 0")
+
 	if userSession, err = provider.GetSession(ctx.RequestCtx); err != nil {
 		return authn, fmt.Errorf("failed to retrieve user session: %w", err)
 	}
@@ -166,7 +168,7 @@ type HeaderAuthnStrategy struct {
 }
 
 // Get returns the Authn information for this AuthnStrategy.
-func (s *HeaderAuthnStrategy) Get(ctx *middlewares.AutheliaCtx, _ *session.Session, object *authorization.Object) (authn *Authn, err error) {
+func (s *HeaderAuthnStrategy) Get(ctx *middlewares.AutheliaCtx, ss *session.Session, object *authorization.Object) (authn *Authn, err error) {
 	var value []byte
 
 	authn = &Authn{
@@ -175,15 +177,22 @@ func (s *HeaderAuthnStrategy) Get(ctx *middlewares.AutheliaCtx, _ *session.Sessi
 		Username: anonymous,
 	}
 
+	ctx.Logger.Infof("authz.get.HeaderAuthnStrategy step 0")
+
 	if value = ctx.Request.Header.PeekBytes(s.headerAuthorize); len(value) == 0 {
+		ctx.Logger.Infof("authz.get.HeaderAuthnStrategy NO HEADER %s, %s,", s.headerAuthorize, s.headerAuthenticate)
 		return authn, nil
 	}
+
+	ctx.Logger.Infof("authz.get step 1")
 
 	authz := model.NewAuthorization()
 
 	if err = authz.ParseBytes(value); err != nil {
 		return authn, fmt.Errorf("failed to parse content of %s header: %w", s.headerAuthorize, err)
 	}
+
+	ctx.Logger.Infof("authz.get step 2")
 
 	authn.Header.Authorization = authz
 
@@ -201,15 +210,20 @@ func (s *HeaderAuthnStrategy) Get(ctx *middlewares.AutheliaCtx, _ *session.Sessi
 			WithFields(map[string]any{"scheme": authn.Header.Authorization.SchemeRaw(), "header": string(s.headerAuthorize)}).
 			Debug("Skipping header authorization as the scheme and header combination is unknown to this endpoint configuration")
 
+		ctx.Logger.Infof("authz.get NO SCHEME")
+
 		return authn, nil
 	}
 
 	switch scheme {
 	case model.AuthorizationSchemeBasic:
+		ctx.Logger.Infof("authz.get BASIC SCHEME")
 		username, level, err = s.handleGetBasic(ctx, authn, object)
 	case model.AuthorizationSchemeBearer:
+		ctx.Logger.Infof("authz.get BEARER SCHEME")
 		username, clientID, ccs, level, err = handleVerifyGETAuthorizationBearer(ctx, authn, object)
 	default:
+		ctx.Logger.Infof("authz.get DEFAULT SCHEME")
 		ctx.Logger.
 			WithFields(map[string]any{"scheme": authn.Header.Authorization.SchemeRaw(), "header": string(s.headerAuthorize)}).
 			Debug("Skipping header authorization as the scheme is unknown to this endpoint configuration")
@@ -218,6 +232,7 @@ func (s *HeaderAuthnStrategy) Get(ctx *middlewares.AutheliaCtx, _ *session.Sessi
 	}
 
 	if err != nil {
+		ctx.Logger.Infof("authz.get INVALID HEADER")
 		if errors.Is(err, errTokenIntent) {
 			return authn, nil
 		}
@@ -227,14 +242,17 @@ func (s *HeaderAuthnStrategy) Get(ctx *middlewares.AutheliaCtx, _ *session.Sessi
 
 	switch {
 	case ccs:
+		ctx.Logger.Infof("authz.get CCS")
 		if len(clientID) == 0 {
 			return authn, fmt.Errorf("failed to determine client id from the %s header", s.headerAuthorize)
 		}
 
 		authn.ClientID = clientID
 	case len(username) == 0:
+		ctx.Logger.Infof("authz.get USERNAME IS 0")
 		return authn, fmt.Errorf("failed to determine username from the %s header", s.headerAuthorize)
 	default:
+		ctx.Logger.Infof("authz.get DEFAULT SOMETHING")
 		var details *authentication.UserDetails
 
 		if details, err = ctx.Providers.UserProvider.GetDetails(username); err != nil {
@@ -251,6 +269,7 @@ func (s *HeaderAuthnStrategy) Get(ctx *middlewares.AutheliaCtx, _ *session.Sessi
 		authn.Details = *details
 	}
 
+	ctx.Logger.Infof("authz.get LEVEL IS %d", level)
 	authn.Level = level
 
 	return authn, nil
@@ -309,6 +328,8 @@ func (s *HeaderLegacyAuthnStrategy) Get(ctx *middlewares.AutheliaCtx, _ *session
 		Level:    authentication.NotAuthenticated,
 		Username: anonymous,
 	}
+
+	ctx.Logger.Infof("authz.get.HeaderLegacyAuthnStrategy step 0")
 
 	if qryValueAuth := ctx.QueryArgs().PeekBytes(qryArgAuth); bytes.Equal(qryValueAuth, qryValueBasic) {
 		authn.Type = AuthnTypeAuthorization

@@ -160,8 +160,12 @@ func (authz *Authz) getRedirectionURL(object *authorization.Object, autheliaURL 
 }
 
 func (authz *Authz) authn(ctx *middlewares.AutheliaCtx, provider *session.Session, object *authorization.Object) (authn *Authn, strategy AuthnStrategy, err error) {
-	for _, strategy = range authz.strategies {
+	ctx.Logger.Infof("authn: Number of strategies: %d", len(authz.strategies))
+	var i int = 0;
+	for i, strategy = range authz.strategies {
+		ctx.Logger.Infof("authn: strategy: index: %d", i)
 		if authn, err = strategy.Get(ctx, provider, object); err != nil {
+			ctx.Logger.Infof("ERROR: authn: strategy: index: %d, error: %s", i, err)
 			// Ensure an error returned can never result in an authenticated user.
 			authn.Level = authentication.NotAuthenticated
 			authn.Username = anonymous
@@ -176,13 +180,16 @@ func (authz *Authz) authn(ctx *middlewares.AutheliaCtx, provider *session.Sessio
 		}
 
 		if authn.Level != authentication.NotAuthenticated {
+			ctx.Logger.Infof("authn: strategy: FOUND LEVEL: %d", authn.Level)
 			break
 		}
 	}
 
 	if strategy.CanHandleUnauthorized() {
+		ctx.Logger.Infof("authn: CanHandleUnauthorized: TRUE")
 		return authn, strategy, err
 	}
 
+	ctx.Logger.Infof("authn: CanHandleUnauthorized: FALSE")
 	return authn, nil, nil
 }

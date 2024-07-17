@@ -8,9 +8,10 @@ build:
 
 	yarn set version stable
 	echo  . bootstrap.sh
-	bash cmd/authelia-scriptfs/authelia-scripts docker build
+	bash cmd/authelia-scripts/authelia-scripts docker build
+	echo "commit with git commit -n -m message to get past husky"
 
 deploy:
 	# docker login ghcr.io -u LePau # GITHUB_IMAGE_REGISTRY_PASSWORD
-	docker tag authelia/authelia:latest ghcr.io/lepau/authelia:4.38.9
-	docker push ghcr.io/lepau/authelia:4.38.9
+	docker tag authelia/authelia:latest ghcr.io/lepau/authelia:4.38.9c
+	docker push ghcr.io/lepau/authelia:4.38.9c
